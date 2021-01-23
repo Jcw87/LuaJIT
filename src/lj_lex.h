@@ -13,11 +13,12 @@
 
 /* Lua lexer tokens. */
 #define TKDEF(_, __) \
-  _(and) _(break) _(do) _(else) _(elseif) _(end) _(false) \
+  _(and) _(break) _(continue) _(do) _(else) _(elseif) _(end) _(false) \
   _(for) _(function) _(goto) _(if) _(in) _(local) _(nil) _(not) _(or) \
   _(repeat) _(return) _(then) _(true) _(until) _(while) \
   __(concat, ..) __(dots, ...) __(eq, ==) __(ge, >=) __(le, <=) __(ne, ~=) \
   __(label, ::) __(number, <number>) __(name, <name>) __(string, <string>) \
+  __(ne_c, !=) __(and_c, &&) __(or_c, ||) \
   __(eof, <eof>)
 
 enum {
