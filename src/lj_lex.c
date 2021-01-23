@@ -306,6 +306,32 @@ static int llex(LexState *ls, TValue *tv)
       while (!currIsNewline(ls) && ls->current != END_OF_STREAM)
 	next(ls);
       continue;
+	case '/': {
+      next(ls);
+	  if (ls->current == '/') {
+        /* line comment */
+        next(ls);
+        while (!currIsNewline(ls) && ls->current != END_OF_STREAM)
+          next(ls); /* skip until end of line (or end of file) */
+	  } else if (ls->current == '*') {
+        /* long comment */
+        int last = 0;
+        next(ls);
+		while (ls->current != END_OF_STREAM) {
+          if (last == '*' && ls->current == '/') break;
+          last = ls->current;
+		  if (currIsNewline(ls)) {
+			  inclinenumber(ls);
+			  continue;
+		  }
+          next(ls); /* skip until closing marker (or end of file) */
+        }
+        if (ls->current == END_OF_STREAM)
+          lj_lex_error(ls, TK_eof, LJ_ERR_XLCOM);
+		else next(ls);
+      } else return '/';
+      continue;
+    }
     case '[': {
       int sep = skip_sep(ls);
       if (sep >= 0) {
@@ -330,6 +356,15 @@ static int llex(LexState *ls, TValue *tv)
     case '~':
       next(ls);
       if (ls->current != '=') return '~'; else { next(ls); return TK_ne; }
+    case '!':
+      next(ls);
+      if (ls->current != '=') return '!'; else { next(ls); return TK_ne_c; }
+    case '&':
+      next(ls);
+      if (ls->current != '&') return '&'; else { next(ls); return TK_and_c; }
+	case '|':
+      next(ls);
+      if (ls->current != '|') return '|'; else { next(ls); return TK_or_c; }
     case ':':
       next(ls);
       if (ls->current != ':') return ':'; else { next(ls); return TK_label; }
