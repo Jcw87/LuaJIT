@@ -340,6 +340,32 @@ static LexToken lex_scan(LexState *ls, TValue *tv)
       while (!lex_iseol(ls) && ls->c != LEX_EOF)
 	lex_next(ls);
       continue;
+    case '/': {
+      lex_next(ls);
+      if (ls->c == '/') {
+        /* line comment */
+        lex_next(ls);
+        while (!lex_iseol(ls) && ls->c != LEX_EOF)
+          lex_next(ls); /* skip until end of line (or end of file) */
+      } else if (ls->c == '*') {
+        /* long comment */
+        int last = 0;
+        lex_next(ls);
+        while (ls->c != LEX_EOF) {
+          if (last == '*' && ls->c == '/') break;
+          last = ls->c;
+          if (lex_iseol(ls)) {
+              lex_newline(ls);
+              continue;
+          }
+          lex_next(ls); /* skip until closing marker (or end of file) */
+        }
+        if (ls->c == LEX_EOF)
+          lj_lex_error(ls, TK_eof, LJ_ERR_XLCOM);
+        else lex_next(ls);
+      } else return '/';
+      continue;
+    }
     case '[': {
       int sep = lex_skipeq(ls);
       if (sep >= 0) {
@@ -364,6 +390,15 @@ static LexToken lex_scan(LexState *ls, TValue *tv)
     case '~':
       lex_next(ls);
       if (ls->c != '=') return '~'; else { lex_next(ls); return TK_ne; }
+    case '!':
+      lex_next(ls);
+      if (ls->c != '=') return '!'; else { lex_next(ls); return TK_ne_c; }
+    case '&':
+      lex_next(ls);
+      if (ls->c != '&') return '&'; else { lex_next(ls); return TK_and_c; }
+	case '|':
+      lex_next(ls);
+      if (ls->c != '|') return '|'; else { lex_next(ls); return TK_or_c; }
     case ':':
       lex_next(ls);
       if (ls->c != ':') return ':'; else { lex_next(ls); return TK_label; }
